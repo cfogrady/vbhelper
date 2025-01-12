@@ -1,9 +1,5 @@
 package com.github.nacabaro.vbhelper.screens
 
-import android.net.Uri
-import androidx.activity.ComponentActivity
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,12 +12,18 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.github.nacabaro.vbhelper.components.TopBanner
+import com.github.nacabaro.vbhelper.source.proto.VitalWearSettings
 
 @Composable
 fun SettingsScreen(
@@ -29,6 +31,9 @@ fun SettingsScreen(
     settingsScreenController: SettingsScreenController,
     onClickImportCard: () -> Unit
 ) {
+    val vitalWearSettings by settingsScreenController.vitalWearSettings.collectAsState(VitalWearSettings.getDefaultInstance())
+    val vitalWearEnableText = if(vitalWearSettings.enabled) "Disable" else "Enable"
+
     Scaffold (
         topBar = {
             TopBanner(
@@ -54,16 +59,15 @@ fun SettingsScreen(
             SettingsSection("DiM/BEm management")
             SettingsEntry(title = "Import DiM card", description = "Import DiM/BEm card file", onClick = onClickImportCard)
             SettingsEntry(title = "Rename DiM/BEm", description = "Set card name") { }
+            SettingsSection("Other Devices")
+            SettingsEntry(title = "$vitalWearEnableText VitalWear Settings", description = "${vitalWearEnableText}s settings for VitalWear") {
+                val newSettings = vitalWearSettings.toBuilder().setEnabled(!vitalWearSettings.enabled).build()
+                settingsScreenController.updateVitalWearSettings(newSettings)
+            }
             SettingsSection("About and credits")
             SettingsEntry(title = "Credits", description = "Credits") { }
             SettingsEntry(title = "About", description = "About") { }
         }
-    }
-}
-
-fun buildFilePickLauncher(activity: ComponentActivity, onItemPicked: (Uri?) -> Unit): ActivityResultLauncher<Array<String>> {
-    return activity.registerForActivityResult(ActivityResultContracts.OpenDocument()) {
-        onItemPicked.invoke(it)
     }
 }
 

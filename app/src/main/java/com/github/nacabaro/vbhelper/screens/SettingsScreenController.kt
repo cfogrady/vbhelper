@@ -9,16 +9,31 @@ import androidx.lifecycle.lifecycleScope
 import com.github.nacabaro.vbhelper.source.SecretsImporter
 import com.github.nacabaro.vbhelper.source.SecretsRepository
 import com.github.nacabaro.vbhelper.source.proto.Secrets
+import com.github.nacabaro.vbhelper.source.proto.VitalWearSettings
+import com.github.nacabaro.vbhelper.source.vitalWearSettingsDataStore
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
-data class SettingsScreenController(val apkFilePickLauncher: ActivityResultLauncher<Array<String>>) {
+data class SettingsScreenController(
+    val apkFilePickLauncher: ActivityResultLauncher<Array<String>>,
+    val vitalWearSettings: Flow<VitalWearSettings>,
+    val updateVitalWearSettings: (VitalWearSettings) -> Unit
+) {
 
     class Factory(private val componentActivity: ComponentActivity, private val secretsImporter: SecretsImporter, private val secretsRepository: SecretsRepository) {
 
         fun buildSettingScreenHandlers(): SettingsScreenController {
             return SettingsScreenController(
-                apkFilePickLauncher = buildFilePickerActivityLauncher(this::importApk)
+                apkFilePickLauncher = buildFilePickerActivityLauncher(this::importApk),
+                componentActivity.vitalWearSettingsDataStore.data,
+                updateVitalWearSettings = { newSettings ->
+                    componentActivity.lifecycleScope.launch(Dispatchers.IO) {
+                        componentActivity.vitalWearSettingsDataStore.updateData {
+                            newSettings
+                        }
+                    }
+                }
             )
         }
 
