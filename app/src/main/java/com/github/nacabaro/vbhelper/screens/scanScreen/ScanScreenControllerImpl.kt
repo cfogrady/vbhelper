@@ -6,6 +6,7 @@ import android.nfc.Tag
 import android.nfc.tech.NfcA
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
@@ -106,6 +107,35 @@ class ScanScreenControllerImpl(
                     Toast.makeText(context, "Missing Secrets. Go to settings and import Vital Arena APK", Toast.LENGTH_SHORT).show()
                 }
             }
+        }
+    }
+
+    override fun onClickWrite(
+        secrets: Secrets,
+        nfcCharacter: NfcCharacter,
+        onComplete: () -> Unit
+    ) {
+        handleTag(secrets) { tagCommunicator ->
+            try {
+                tagCommunicator.sendCharacter(nfcCharacter)
+                onComplete.invoke()
+                "Sent character successfully!"
+            } catch (e: Throwable) {
+                Log.e("TAG", e.stackTraceToString())
+                "Whoops"
+            }
+        }
+    }
+
+    override fun onClickCheckCard(
+        secrets: Secrets,
+        nfcCharacter: NfcCharacter,
+        onComplete: () -> Unit
+    ) {
+        handleTag(secrets) { tagCommunicator ->
+            tagCommunicator.prepareDIMForCharacter(nfcCharacter.dimId)
+            onComplete.invoke()
+            "Sent DIM successfully!"
         }
     }
 
