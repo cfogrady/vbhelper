@@ -1,4 +1,4 @@
-package com.github.nacabaro.vbhelper.screens
+package com.github.nacabaro.vbhelper.screens.settingsScreen
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -28,8 +28,7 @@ import com.github.nacabaro.vbhelper.source.proto.VitalWearSettings
 @Composable
 fun SettingsScreen(
     navController: NavController,
-    settingsScreenController: SettingsScreenController,
-    onClickImportCard: () -> Unit
+    settingsScreenController: SettingsScreenControllerImpl,
 ) {
     val vitalWearSettings by settingsScreenController.vitalWearSettings.collectAsState(VitalWearSettings.getDefaultInstance())
     val vitalWearEnableText = if(vitalWearSettings.enabled) "Disable" else "Enable"
@@ -54,10 +53,19 @@ fun SettingsScreen(
         ) {
             SettingsSection("NFC Communication")
             SettingsEntry(title = "Import APK", description = "Import Secrets From Vital Arean 2.1.0 APK") {
-                settingsScreenController.apkFilePickLauncher.launch(arrayOf("*/*"))
+                settingsScreenController.onClickImportApk()
+            }
+            SettingsSection("Data management")
+            SettingsEntry(title = "Export data", description = "Export application database") {
+                settingsScreenController.onClickOpenDirectory()
+            }
+            SettingsEntry(title = "Import data", description = "Import application database") {
+                settingsScreenController.onClickImportDatabase()
             }
             SettingsSection("DiM/BEm management")
-            SettingsEntry(title = "Import DiM card", description = "Import DiM/BEm card file", onClick = onClickImportCard)
+            SettingsEntry(title = "Import DiM card", description = "Import DiM/BEm card file") {
+                settingsScreenController.onClickImportCard()
+            }
             SettingsEntry(title = "Rename DiM/BEm", description = "Set card name") { }
             SettingsSection("Other Devices")
             SettingsEntry(title = "$vitalWearEnableText VitalWear Settings", description = "${vitalWearEnableText}s settings for VitalWear") {

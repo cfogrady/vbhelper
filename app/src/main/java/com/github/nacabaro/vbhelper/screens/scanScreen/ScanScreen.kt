@@ -62,7 +62,7 @@ fun ScanScreen(
     val context = LocalContext.current
     LaunchedEffect(storageRepository) {
         withContext(Dispatchers.IO) {
-            if(characterId != null) {
+            if(characterId != null && nfcCharacter == null) {
                 nfcCharacter = characterToNfc(context, characterId)
             }
         }
@@ -130,6 +130,12 @@ fun ScanScreen(
     } else if (isDoneSendingCard && isDoneWritingCharacter) {
         writingScreen = false
         navController.navigate(NavigationItems.Home.route)
+        LaunchedEffect(storageRepository) {
+            withContext(Dispatchers.IO) {
+                storageRepository
+                    .deleteCharacter(characterId!!)
+            }
+        }
     }
 
     if (readingScreen) {

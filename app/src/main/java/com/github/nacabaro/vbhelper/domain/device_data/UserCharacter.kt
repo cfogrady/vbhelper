@@ -4,8 +4,8 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
 import com.github.cfogrady.vbnfc.data.NfcCharacter
-import com.github.nacabaro.vbhelper.domain.DeviceType
-import com.github.nacabaro.vbhelper.domain.Character
+import com.github.nacabaro.vbhelper.utils.DeviceType
+import com.github.nacabaro.vbhelper.domain.characters.Character
 
 @Entity(
     foreignKeys = [
@@ -35,5 +35,6 @@ data class UserCharacter (
     var totalBattlesLost: Int,
     var activityLevel: Int,
     var heartRateCurrent: Int,
-    var characterType: DeviceType
+    var characterType: DeviceType,
+    var isActive: Boolean
 )

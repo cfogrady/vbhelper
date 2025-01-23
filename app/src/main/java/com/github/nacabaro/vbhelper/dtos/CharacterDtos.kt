@@ -1,7 +1,7 @@
 package com.github.nacabaro.vbhelper.dtos
 
 import com.github.cfogrady.vbnfc.data.NfcCharacter
-import com.github.nacabaro.vbhelper.domain.DeviceType
+import com.github.nacabaro.vbhelper.utils.DeviceType
 
 
 object CharacterDtos {
@@ -26,11 +26,29 @@ object CharacterDtos {
         var characterType: DeviceType,
         val spriteIdle: ByteArray,
         val spriteWidth: Int,
-        val spriteHeight: Int
+        val spriteHeight: Int,
+        val isBemCard: Boolean
     )
 
     data class DiMInfo(
         val cardId: Int,
         val charId: Int
+    )
+
+    data class TransformationHistory(
+        val id: Long,
+        val spriteIdle: ByteArray,
+        val spriteWidth: Int,
+        val spriteHeight: Int,
+        val monIndex: Int,
+        val transformationDate: Long
+    )
+
+    data class CardProgress(
+        val id: Long,
+        val spriteIdle: ByteArray,
+        val spriteWidth: Int,
+        val spriteHeight: Int,
+        val discoveredOn: Long?
     )
 }

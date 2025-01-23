@@ -1,8 +1,8 @@
 package com.github.nacabaro.vbhelper.components
 
-import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -15,22 +15,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.github.nacabaro.vbhelper.utils.BitmapData
 import com.github.nacabaro.vbhelper.utils.getBitmap
-import java.nio.ByteBuffer
 
 @Composable
 fun DexDiMEntry(
     name: String,
     logo: BitmapData,
+    obtainedCharacters: Int,
+    totalCharacters: Int,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val bitmap = remember (logo.bitmap) {
-        logo.getBitmap()
-    }
+    val bitmap = remember (logo.bitmap) { logo.getBitmap() }
     val imageBitmap = remember(bitmap) { bitmap.asImageBitmap() }
+    val density: Float = LocalContext.current.resources.displayMetrics.density
+    val dpSize = (logo.width * 4 / density).dp
 
     Card (
         shape = MaterialTheme.shapes.medium,
@@ -49,13 +51,23 @@ fun DexDiMEntry(
                 filterQuality = FilterQuality.None,
                 modifier = Modifier
                     .padding(8.dp)
-                    .size(64.dp)
+                    .size(dpSize)
             )
-            Text(
-                text = name,
+            Column(
                 modifier = Modifier
                     .padding(8.dp)
-            )
+            ) {
+                Text(
+                    text = name,
+                    modifier = Modifier
+                )
+                Text(
+                    text = "$obtainedCharacters of $totalCharacters characters obtained",
+                    fontFamily = MaterialTheme.typography.labelSmall.fontFamily,
+                    fontSize = MaterialTheme.typography.labelSmall.fontSize,
+                    modifier = Modifier
+                )
+            }
         }
     }
 }

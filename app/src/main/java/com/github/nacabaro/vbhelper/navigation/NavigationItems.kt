@@ -14,5 +14,9 @@ sealed class NavigationItems (
     object Storage : NavigationItems("Storage", R.drawable.baseline_catching_pokemon_24, "Storage")
     object Settings : NavigationItems("Settings", R.drawable.baseline_settings_24, "Settings")
     object Viewer : NavigationItems("Viewer", R.drawable.baseline_image_24, "Viewer")
-    object CardView : NavigationItems("Card/{dimId}", R.drawable.baseline_image_24, "Card")
+    object CardView : NavigationItems("Card/{cardId}", R.drawable.baseline_image_24, "Card")
+    object Items : NavigationItems("Items", R.drawable.baseline_data_24, "Items")
+    object MyItems : NavigationItems("MyItems", R.drawable.baseline_data_24, "My items")
+    object ItemsStore : NavigationItems("ItemsStore", R.drawable.baseline_data_24, "Items store")
+    object ApplyItem : NavigationItems("ApplyItem/{itemId}", R.drawable.baseline_data_24, "Apply item")
 }
