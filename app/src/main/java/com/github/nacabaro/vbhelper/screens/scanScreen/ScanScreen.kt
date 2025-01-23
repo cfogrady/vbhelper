@@ -39,6 +39,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.withContext
 
+
 const val SCAN_SCREEN_ACTIVITY_LIFECYCLE_LISTENER = "SCAN_SCREEN_ACTIVITY_LIFECYCLE_LISTENER"
 
 @Composable
@@ -151,6 +152,7 @@ fun ScanScreen(
         }
     } else {
         ChooseConnectOption(
+            onNearby = {scanScreenController.launchNearbyActivity()},
             onClickRead = when {
                 characterId != null -> null
                 else -> {
@@ -187,6 +189,7 @@ fun ScanScreen(
 fun ChooseConnectOption(
     onClickRead: (() -> Unit)? = null,
     onClickWrite: (() -> Unit)? = null,
+    onNearby: ()->Unit
 ) {
     Scaffold(
         topBar = { TopBanner(text = "Scan a Vital Bracelet") }
@@ -209,10 +212,14 @@ fun ChooseConnectOption(
                 disabled = onClickWrite == null,
                 onClick = onClickWrite?: {  },
             )
+            Spacer(modifier = Modifier.height(16.dp))
+            ScanButton(
+                text = "NearBy",
+                onClick = onNearby,
+            )
         }
     }
 }
-
 
 @Composable
 fun ScanButton(
@@ -252,6 +259,8 @@ fun ScanScreenPreview() {
             override fun onClickRead(secrets: Secrets, onComplete: ()->Unit) {}
             override fun onClickCheckCard(secrets: Secrets, nfcCharacter: NfcCharacter, onComplete: () -> Unit) {}
             override fun onClickWrite(secrets: Secrets, nfcCharacter: NfcCharacter, onComplete: () -> Unit) {}
+            override fun launchNearbyActivity() {}
+
             override fun cancelRead() {}
         },
         characterId = null

@@ -68,6 +68,7 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.vb.nfc.reader)
     implementation(libs.dim.reader)
+    implementation(libs.connections)
     ksp(libs.androidx.room.compiler)
     annotationProcessor(libs.androidx.room.compiler)
     implementation(libs.androidx.core.ktx)

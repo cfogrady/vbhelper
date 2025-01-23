@@ -127,6 +127,10 @@ class ScanScreenControllerImpl(
         }
     }
 
+    override fun launchNearbyActivity() {
+        context.startActivity(Intent(context, NearbyActivity::class.java))
+    }
+
     override fun onClickCheckCard(
         secrets: Secrets,
         nfcCharacter: NfcCharacter,

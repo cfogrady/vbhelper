@@ -10,6 +10,7 @@ interface ScanScreenController {
     fun onClickRead(secrets: Secrets, onComplete: ()->Unit)
     fun onClickCheckCard(secrets: Secrets, nfcCharacter: NfcCharacter, onComplete: () -> Unit)
     fun onClickWrite(secrets: Secrets, nfcCharacter: NfcCharacter, onComplete: () -> Unit)
+    fun launchNearbyActivity()
 
     fun cancelRead()
 
