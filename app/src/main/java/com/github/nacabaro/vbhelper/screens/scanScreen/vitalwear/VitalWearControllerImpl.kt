@@ -37,12 +37,13 @@ class VitalWearControllerImpl(private val activity: ComponentActivity): VitalWea
 
     override suspend fun checkVitalWearPermissionsAndRequestForMissing(): Boolean {
         val missingPermissions = CharacterTransfer.getMissingPermissions(activity)
+        if(missingPermissions.isNotEmpty()) {
+            return true
+        }
         val job = CoroutineScope(Dispatchers.Default).async {
             addPermissionsSuccessResult.first()
         }
-        if(missingPermissions.isNotEmpty()) {
-            missingPermissionsLauncherForVitalWearConnection.launch(missingPermissions.toTypedArray())
-        }
+        missingPermissionsLauncherForVitalWearConnection.launch(missingPermissions.toTypedArray())
         return job.await()
     }
 
@@ -57,11 +58,14 @@ class VitalWearControllerImpl(private val activity: ComponentActivity): VitalWea
     }
 
     override fun getActiveCharacter(): Character {
-        return Character.getDefaultInstance()
+        return tmpCharacter
     }
 
+    var tmpCharacter = Character.getDefaultInstance()
+
     override suspend fun receiveCharacter(character: Character): Boolean {
-        TODO("Not yet implemented")
+        tmpCharacter = character
+        return true
     }
 
     override fun deleteCharacter() {

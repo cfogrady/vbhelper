@@ -16,6 +16,8 @@ import com.github.nacabaro.vbhelper.screens.itemsScreen.ItemsScreenControllerImp
 import com.github.nacabaro.vbhelper.screens.scanScreen.ScanScreenControllerImpl
 import com.github.nacabaro.vbhelper.screens.settingsScreen.SettingsScreenControllerImpl
 import com.github.nacabaro.vbhelper.screens.adventureScreen.AdventureScreenControllerImpl
+import com.github.nacabaro.vbhelper.screens.scanScreen.vitalwear.VitalWearController
+import com.github.nacabaro.vbhelper.screens.scanScreen.vitalwear.VitalWearControllerImpl
 import com.github.nacabaro.vbhelper.screens.storageScreen.StorageScreenControllerImpl
 import com.github.nacabaro.vbhelper.ui.theme.VBHelperTheme
 
@@ -36,12 +38,14 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val application = applicationContext as VBHelper
+        val vitalWearController = VitalWearControllerImpl(this)
         val scanScreenController = ScanScreenControllerImpl(
             application.container.dataStoreSecretsRepository.secretsFlow,
             application.container.settingsRepository.settingsFlow,
             this,
             this::registerActivityLifecycleListener,
-            this::unregisterActivityLifecycleListener
+            this::unregisterActivityLifecycleListener,
+            vitalWearController,
         )
         val settingsScreenController = SettingsScreenControllerImpl(this)
         val itemsScreenController = ItemsScreenControllerImpl(this)

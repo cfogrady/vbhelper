@@ -10,6 +10,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,10 +19,12 @@ import com.github.cfogrady.vitalwear.transfer.CharacterTransfer
 import com.github.nacabaro.vbhelper.screens.scanScreen.ScanScreenState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun VitalWearTransfer(vitalWearController: VitalWearController, scanScreenState: ScanScreenState, onComplete: (success: Boolean) -> Unit) {
@@ -63,10 +66,15 @@ fun VitalWearTransfer(vitalWearController: VitalWearController, scanScreenState:
 
 @Composable
 fun FindDevices(characterTransfer: CharacterTransfer, onDeviceFound: (String)->Unit) {
-    var discoveredDevices by remember { mutableStateOf(flow<String> {}) }
+    val discoveredDevices = remember { MutableSharedFlow<String>() }
     var connected by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
     DisposableEffect(true) {
-        discoveredDevices = characterTransfer.searchForOtherTransferDevices()
+        coroutineScope.launch {
+            characterTransfer.searchForOtherTransferDevices().collect {
+                discoveredDevices.emit(it)
+            }
+        }
 
         onDispose {
             if(!connected) {
@@ -76,6 +84,7 @@ fun FindDevices(characterTransfer: CharacterTransfer, onDeviceFound: (String)->U
     }
     DisplayMatchingDevices(characterTransfer.deviceName, discoveredDevices, rescan = {
         connected = false
+        characterTransfer.close()
         characterTransfer.searchForOtherTransferDevices()
     }, selectDevice = {
         connected = true

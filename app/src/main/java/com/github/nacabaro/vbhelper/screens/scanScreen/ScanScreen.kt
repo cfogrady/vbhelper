@@ -56,6 +56,7 @@ fun ScanScreen(
 
     val coroutineScope = rememberCoroutineScope()
     val secrets by scanScreenController.secretsFlow.collectAsState(null)
+    val settings by scanScreenController.settingsFlow.collectAsState(Settings.getDefaultInstance())
     var scanScreenState by remember { mutableStateOf(ScanScreenState.SELECT) }
     var isDoneReadingCharacter by remember { mutableStateOf(false) }
     var isDoneSendingCard by remember { mutableStateOf(false) }
@@ -167,6 +168,7 @@ fun ScanScreen(
         }
         ScanScreenState.SELECT -> {
             ChooseConnectOption(
+                displayVitalWearOptions = settings.vitalWearEnabled,
                 onReceiveFromVitalWear = {
                     coroutineScope.launch {
                         val hasPermissions = scanScreenController.vitalWearController.checkVitalWearPermissionsAndRequestForMissing()

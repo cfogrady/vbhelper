@@ -95,4 +95,5 @@ dependencies {
     implementation(libs.vitalwear.protos)
     implementation(libs.vitalwear.transfer)
     implementation(libs.p2p.ui)
+    implementation(libs.play.services.nearby)
 }
