@@ -1,16 +1,7 @@
 package com.github.nacabaro.vbhelper.screens.scanScreen.vitalwear
 
-import android.graphics.Bitmap
-import android.widget.Toast
-import androidx.compose.animation.core.FastOutLinearInEasing
-import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.animateIntAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -22,19 +13,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.github.cfogrady.vitalwear.protos.Character
+import com.github.cfogrady.nearby.connections.p2p.ui.DisplayMatchingDevices
 import com.github.cfogrady.vitalwear.transfer.CharacterTransfer
 import com.github.nacabaro.vbhelper.screens.scanScreen.ScanScreenState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 
 @Composable
-fun VitalWearTransfer(vitalWearController: VitalWearController, scanScreenState: ScanScreenState) {
+fun VitalWearTransfer(vitalWearController: VitalWearController, scanScreenState: ScanScreenState, onComplete: (success: Boolean) -> Unit) {
     if(scanScreenState != ScanScreenState.VITALWEAR_TO_APP && scanScreenState != ScanScreenState.APP_TO_VITALWEAR) {
         throw IllegalArgumentException("VitalWearTransfer can only take VITALWEAR_TO_APP or APP_TO_VITALWEAR")
     }
@@ -65,33 +55,11 @@ fun VitalWearTransfer(vitalWearController: VitalWearController, scanScreenState:
             }
         }
         VitalWearTransferState.COMPLETE -> {
-            TransferResult(scanScreenState, result)
+            TransferResult(vitalWearController, scanScreenState, result, onComplete)
         }
     }
 }
 
-var receiveCharacterSprites: TransferActivityController.ReceiveCharacterSprites? = null
-
-suspend fun receiveCharacter(character: Character): Boolean {
-    val receivedCharacterSprites = transferActivityController.receiveCharacter(this, character)
-    if(receivedCharacterSprites == null) {
-        return false
-    }
-    receiveCharacterSprites = receivedCharacterSprites
-    return true
-}
-
-@Composable
-fun SelectSendOrReceive(onSelect: (SendOrReceive) -> Unit) {
-    Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-        CompactButton(onClick = {onSelect.invoke(SendOrReceive.SEND)}) {
-            Text("Send Character")
-        }
-        CompactButton(onClick = {onSelect.invoke(SendOrReceive.RECEIVE)}) {
-            Text("Receive Character")
-        }
-    }
-}
 
 @Composable
 fun FindDevices(characterTransfer: CharacterTransfer, onDeviceFound: (String)->Unit) {
@@ -116,103 +84,102 @@ fun FindDevices(characterTransfer: CharacterTransfer, onDeviceFound: (String)->U
 }
 
 @Composable
-fun TransferResult(sendOrReceive: SendOrReceive, resultStatusFlow: StateFlow<CharacterTransfer.Result>) {
+fun TransferResult(vitalWearController: VitalWearController, scanScreenState: ScanScreenState, resultStatusFlow: StateFlow<CharacterTransfer.Result>, onComplete: (success: Boolean)->Unit) {
     val resultStatus = remember { resultStatusFlow.value }
     when(resultStatus) {
         CharacterTransfer.Result.TRANSFERRING -> {
             throw IllegalStateException("Shouldn't be looking at result is the status is still Trasnferring")
         }
         CharacterTransfer.Result.SUCCESS -> {
-            if(sendOrReceive == SendOrReceive.SEND) {
-                val activeCharacter = transferActivityController.getActiveCharacter()!!
+            if(scanScreenState == ScanScreenState.APP_TO_VITALWEAR) {
                 LaunchedEffect(true) {
-                    transferActivityController.deleteActiveCharacter()
+                    vitalWearController.deleteCharacter()
                 }
-                val idle = activeCharacter.characterSprites.sprites[CharacterSprites.IDLE_1]
-                val walk = activeCharacter.characterSprites.sprites[CharacterSprites.WALK_1]
-                SendAnimation(idleBitmap = idle, walkBitmap = walk) { finish() }
+                vitalWearController.toast("Sent")
+                onComplete.invoke(true)
+                // SendAnimation(idleBitmap = idle, walkBitmap = walk) { finish() }
             } else {
-                ReceiveAnimation(receiveCharacterSprites!!.idle, receiveCharacterSprites!!.happy) { finish() }
-                Toast.makeText(this, "Transfer Recevied!", Toast.LENGTH_SHORT).show()
-                finish()
+                // ReceiveAnimation(receiveCharacterSprites!!.idle, receiveCharacterSprites!!.happy) { finish() }
+                vitalWearController.toast("Transfer Received!")
+                onComplete.invoke(true)
             }
         }
         CharacterTransfer.Result.REJECTED -> {
-            Toast.makeText(this, "Transfer Rejected!", Toast.LENGTH_SHORT).show()
-            finish()
+            vitalWearController.toast("Transfer Rejected!")
+            onComplete.invoke(false)
         }
         CharacterTransfer.Result.FAILURE -> {
-            Toast.makeText(this, "Transfer Failed!", Toast.LENGTH_SHORT).show()
-            finish()
+            vitalWearController.toast("Transfer Failed!")
+            onComplete.invoke(false)
         }
     }
 }
 
-@Composable
-fun SendAnimation(idleBitmap: Bitmap, walkBitmap: Bitmap, onComplete: ()->Unit) {
-    var targetAnimation by remember { mutableStateOf(0) }
-    var idle by remember { mutableStateOf(true) }
-    val flicker by animateIntAsState(targetAnimation, tween(
-        durationMillis = 3000,
-        easing = FastOutLinearInEasing
-    )
-    ) {
-        if(it == 11) {
-            onComplete.invoke()
-        }
-    }
-    LaunchedEffect(true) {
-        delay(500)
-        idle = false
-        delay(500)
-        targetAnimation = 11
-    }
-    vitalBoxFactory.VitalBox {
-        bitmapScaler.ScaledBitmap(transferBackground, "Background", alignment = Alignment.BottomCenter)
-
-        if(flicker % 2 == 0) {
-            bitmapScaler.ScaledBitmap(if(idle) idleBitmap else walkBitmap, "Character", alignment = Alignment.BottomCenter,
-                modifier = Modifier.offset(y = backgroundHeight.times(-0.05f)))
-        }
-    }
-}
-
-@Composable
-fun ReceiveAnimation(idleBitmap: Bitmap, happyBitmap: Bitmap, onComplete: () -> Unit) {
-    var targetAnimation by remember { mutableStateOf(0) }
-    var idle by remember { mutableStateOf(false) }
-    var startIdleFlip by remember { mutableStateOf(false) }
-    val flicker by animateIntAsState(targetAnimation, tween(
-        durationMillis = 3000,
-        easing = LinearOutSlowInEasing
-    )
-    ) {
-        if(it == 11) {
-            startIdleFlip = true
-        }
-    }
-    LaunchedEffect(true) {
-        targetAnimation = 11
-    }
-    LaunchedEffect(startIdleFlip) {
-        if(startIdleFlip) {
-            idle = true
-            delay(500)
-            idle = false
-            delay(500)
-            idle = true
-            delay(500)
-            idle = false
-            onComplete.invoke()
-
-        }
-    }
-    vitalBoxFactory.VitalBox {
-        bitmapScaler.ScaledBitmap(transferBackground, "Background", alignment = Alignment.BottomCenter)
-
-        if(flicker % 2 == 1) {
-            bitmapScaler.ScaledBitmap(if(idle) idleBitmap else happyBitmap, "Character", alignment = Alignment.BottomCenter,
-                modifier = Modifier.offset(y = backgroundHeight.times(-0.05f)))
-        }
-    }
-}
+//@Composable
+//fun SendAnimation(idleBitmap: Bitmap, walkBitmap: Bitmap, onComplete: ()->Unit) {
+//    var targetAnimation by remember { mutableStateOf(0) }
+//    var idle by remember { mutableStateOf(true) }
+//    val flicker by animateIntAsState(targetAnimation, tween(
+//        durationMillis = 3000,
+//        easing = FastOutLinearInEasing
+//    )
+//    ) {
+//        if(it == 11) {
+//            onComplete.invoke()
+//        }
+//    }
+//    LaunchedEffect(true) {
+//        delay(500)
+//        idle = false
+//        delay(500)
+//        targetAnimation = 11
+//    }
+//    vitalBoxFactory.VitalBox {
+//        bitmapScaler.ScaledBitmap(transferBackground, "Background", alignment = Alignment.BottomCenter)
+//
+//        if(flicker % 2 == 0) {
+//            bitmapScaler.ScaledBitmap(if(idle) idleBitmap else walkBitmap, "Character", alignment = Alignment.BottomCenter,
+//                modifier = Modifier.offset(y = backgroundHeight.times(-0.05f)))
+//        }
+//    }
+//}
+//
+//@Composable
+//fun ReceiveAnimation(idleBitmap: Bitmap, happyBitmap: Bitmap, onComplete: () -> Unit) {
+//    var targetAnimation by remember { mutableStateOf(0) }
+//    var idle by remember { mutableStateOf(false) }
+//    var startIdleFlip by remember { mutableStateOf(false) }
+//    val flicker by animateIntAsState(targetAnimation, tween(
+//        durationMillis = 3000,
+//        easing = LinearOutSlowInEasing
+//    )
+//    ) {
+//        if(it == 11) {
+//            startIdleFlip = true
+//        }
+//    }
+//    LaunchedEffect(true) {
+//        targetAnimation = 11
+//    }
+//    LaunchedEffect(startIdleFlip) {
+//        if(startIdleFlip) {
+//            idle = true
+//            delay(500)
+//            idle = false
+//            delay(500)
+//            idle = true
+//            delay(500)
+//            idle = false
+//            onComplete.invoke()
+//
+//        }
+//    }
+//    vitalBoxFactory.VitalBox {
+//        bitmapScaler.ScaledBitmap(transferBackground, "Background", alignment = Alignment.BottomCenter)
+//
+//        if(flicker % 2 == 1) {
+//            bitmapScaler.ScaledBitmap(if(idle) idleBitmap else happyBitmap, "Character", alignment = Alignment.BottomCenter,
+//                modifier = Modifier.offset(y = backgroundHeight.times(-0.05f)))
+//        }
+//    }
+//}

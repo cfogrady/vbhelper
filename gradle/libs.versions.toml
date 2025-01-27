@@ -38,6 +38,7 @@ androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 protobuf-gradle-plugin = { module = "com.google.protobuf:protobuf-gradle-plugin", version.ref = "protobufGradlePlugin" }
 protobuf-javalite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobufJavalite" }
+p2p-ui = { module = "com.github.cfogrady.nearby.connections.p2p:ui", version.ref = "connections" }
 vitalwear-protos = { module = "com.github.cfogrady.vitalwear:protos", version.ref = "vitalwear" }
 vitalwear-transfer = { module = "com.github.cfogrady.vitalwear:transfer", version.ref = "vitalwear" }
 vb-nfc-reader = { module = "com.github.cfogrady:vb-nfc-reader", version.ref = "vbNfcReader" }

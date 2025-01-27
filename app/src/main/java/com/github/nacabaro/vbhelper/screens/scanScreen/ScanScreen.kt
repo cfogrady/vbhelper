@@ -28,8 +28,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.github.cfogrady.vbnfc.data.NfcCharacter
-import com.github.cfogrady.vitalwear.protos.Character
-import com.github.cfogrady.vitalwear.transfer.CharacterTransfer
 import com.github.nacabaro.vbhelper.ActivityLifecycleListener
 import com.github.nacabaro.vbhelper.components.TopBanner
 import com.github.nacabaro.vbhelper.di.VBHelper
@@ -217,10 +215,20 @@ fun ScanScreen(
         }
 
         ScanScreenState.VITALWEAR_TO_APP -> {
-            VitalWearTransfer(scanScreenController.vitalWearController, scanScreenState)
+            VitalWearTransfer(scanScreenController.vitalWearController, scanScreenState) {
+                scanScreenState = ScanScreenState.SELECT
+                if(it) {
+                    navController.navigate(NavigationItems.Home.route)
+                }
+            }
         }
         ScanScreenState.APP_TO_VITALWEAR -> {
-            VitalWearTransfer(scanScreenController.vitalWearController, scanScreenState)
+            VitalWearTransfer(scanScreenController.vitalWearController, scanScreenState) {
+                scanScreenState = ScanScreenState.SELECT
+                if(it) {
+                    navController.navigate(NavigationItems.Home.route)
+                }
+            }
         }
     }
 }
@@ -301,20 +309,7 @@ fun ScanScreenPreview() {
         scanScreenController = object: ScanScreenController {
             override val secretsFlow = MutableStateFlow<Secrets>(Secrets.getDefaultInstance())
             override val settingsFlow = MutableStateFlow<Settings>(Settings.getDefaultInstance())
-            override val vitalWearController = object: VitalWearController {
-                override suspend fun checkVitalWearPermissionsAndRequestForMissing(): Boolean {
-                    return true
-                }
-
-                override fun createCharacterTransfer(): CharacterTransfer {}
-
-                override fun getActiveCharacter(): Character {
-                    Character.getDefaultInstance()
-                }
-
-                override suspend fun receiveCharacter(character: Character): Boolean {}
-
-            }
+            override val vitalWearController = VitalWearController.MOCK_VITAL_WEAR_CONTROLLER
             override fun unregisterActivityLifecycleListener(key: String) { }
             override fun registerActivityLifecycleListener(
                 key: String,

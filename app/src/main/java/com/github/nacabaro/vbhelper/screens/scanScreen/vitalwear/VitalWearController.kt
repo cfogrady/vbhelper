@@ -2,6 +2,10 @@ package com.github.nacabaro.vbhelper.screens.scanScreen.vitalwear
 
 import com.github.cfogrady.vitalwear.protos.Character
 import com.github.cfogrady.vitalwear.transfer.CharacterTransfer
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flow
 
 interface VitalWearController {
 
@@ -10,18 +14,35 @@ interface VitalWearController {
             override suspend fun checkVitalWearPermissionsAndRequestForMissing(): Boolean {
                 return true
             }
-
             override fun createCharacterTransfer(): CharacterTransfer {
-                return CharacterTransfer()
+                return object: CharacterTransfer {
+                    override val deviceName = "TEST"
+                    override fun close() {}
+                    override fun receiveCharacterFrom(
+                        senderName: String,
+                        receive: suspend (Character) -> Boolean
+                    ): StateFlow<CharacterTransfer.Result> {
+                        return MutableStateFlow(CharacterTransfer.Result.TRANSFERRING)
+                    }
+                    override fun searchForOtherTransferDevices(): Flow<String> {
+                        return flow {"ABCD"}
+                    }
+                    override fun sendCharacterToDevice(
+                        senderName: String,
+                        character: Character
+                    ): StateFlow<CharacterTransfer.Result> {
+                        return MutableStateFlow(CharacterTransfer.Result.TRANSFERRING)
+                    }
+                }
             }
-
             override fun getActiveCharacter(): Character {
-                TODO("Not yet implemented")
+                return Character.getDefaultInstance()
             }
-
             override suspend fun receiveCharacter(character: Character): Boolean {
-                TODO("Not yet implemented")
+                return true
             }
+            override fun deleteCharacter() {}
+            override fun toast(message: String) {}
 
         }
     }
@@ -33,4 +54,8 @@ interface VitalWearController {
     fun getActiveCharacter(): Character
 
     suspend fun receiveCharacter(character: Character): Boolean
+
+    fun deleteCharacter()
+
+    fun toast(message: String)
 }

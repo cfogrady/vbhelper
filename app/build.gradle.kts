@@ -94,4 +94,5 @@ dependencies {
     implementation("androidx.compose.material:material")
     implementation(libs.vitalwear.protos)
     implementation(libs.vitalwear.transfer)
+    implementation(libs.p2p.ui)
 }

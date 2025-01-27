@@ -27,9 +27,7 @@ class VitalWearControllerImpl(private val activity: ComponentActivity): VitalWea
                 }
             }
             if(deniedPermissions.isNotEmpty()) {
-                activity.runOnUiThread {
-                    Toast.makeText(activity, "Vital Wear Transfers requires: $deniedPermissions", Toast.LENGTH_SHORT).show()
-                }
+                toast("Vital Wear Transfers requires: $deniedPermissions")
             }
             CoroutineScope(Dispatchers.Default).launch {
                 addPermissionsSuccessResult.emit(deniedPermissions.isEmpty())
@@ -55,10 +53,24 @@ class VitalWearControllerImpl(private val activity: ComponentActivity): VitalWea
     }
 
     override fun createCharacterTransfer(): CharacterTransfer {
-        return CharacterTransfer(activity)
+        return CharacterTransfer.getInstance(activity)
     }
 
     override fun getActiveCharacter(): Character {
         return Character.getDefaultInstance()
+    }
+
+    override suspend fun receiveCharacter(character: Character): Boolean {
+        TODO("Not yet implemented")
+    }
+
+    override fun deleteCharacter() {
+
+    }
+
+    override fun toast(message: String) {
+        activity.runOnUiThread {
+            Toast.makeText(activity, message, Toast.LENGTH_SHORT).show()
+        }
     }
 }
