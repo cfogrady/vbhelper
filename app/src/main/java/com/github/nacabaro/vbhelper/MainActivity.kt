@@ -5,6 +5,8 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import com.github.nacabaro.vbhelper.navigation.AppNavigation
 import com.github.nacabaro.vbhelper.di.VBHelper
@@ -36,6 +38,7 @@ class MainActivity : ComponentActivity() {
         val application = applicationContext as VBHelper
         val scanScreenController = ScanScreenControllerImpl(
             application.container.dataStoreSecretsRepository.secretsFlow,
+            application.container.settingsRepository.settingsFlow,
             this,
             this::registerActivityLifecycleListener,
             this::unregisterActivityLifecycleListener

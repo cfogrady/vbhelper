@@ -92,4 +92,6 @@ dependencies {
     implementation("com.google.android.material:material:1.2.0")
     implementation(libs.protobuf.javalite)
     implementation("androidx.compose.material:material")
+    implementation(libs.vitalwear.protos)
+    implementation(libs.vitalwear.transfer)
 }

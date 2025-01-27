@@ -14,24 +14,24 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.github.nacabaro.vbhelper.components.TopBanner
-import com.github.nacabaro.vbhelper.source.proto.VitalWearSettings
+import com.github.nacabaro.vbhelper.source.proto.Settings
+import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(
     navController: NavController,
     settingsScreenController: SettingsScreenControllerImpl,
 ) {
-    val vitalWearSettings by settingsScreenController.vitalWearSettings.collectAsState(VitalWearSettings.getDefaultInstance())
-    val vitalWearEnableText = if(vitalWearSettings.enabled) "Disable" else "Enable"
+    val settings by settingsScreenController.settings.collectAsState(Settings.getDefaultInstance())
+    val vitalWearEnableText = if(settings.vitalWearEnabled) "Disable" else "Enable"
+    val coroutineScope = rememberCoroutineScope()
 
     Scaffold (
         topBar = {
@@ -62,8 +62,8 @@ fun SettingsScreen(
             SettingsEntry(title = "Rename DiM/BEm", description = "Set card name") { }
             SettingsSection("Other Devices")
             SettingsEntry(title = "$vitalWearEnableText VitalWear Settings", description = "${vitalWearEnableText}s settings for VitalWear") {
-                val newSettings = vitalWearSettings.toBuilder().setEnabled(!vitalWearSettings.enabled).build()
-                settingsScreenController.updateVitalWearSettings(newSettings)
+                val newVitalWearEnabled = !settings.vitalWearEnabled
+                settingsScreenController.setVitalWearEnabled(newVitalWearEnabled)
             }
             SettingsSection("About and credits")
             SettingsEntry(title = "Credits", description = "Credits") { }
@@ -75,7 +75,7 @@ fun SettingsScreen(
             SettingsEntry(title = "Import data", description = "Import application database") {
                 settingsScreenController.onClickImportDatabase()
             }
-\
+
         }
     }
 }

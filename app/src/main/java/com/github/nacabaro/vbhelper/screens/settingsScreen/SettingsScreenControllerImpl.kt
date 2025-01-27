@@ -17,9 +17,11 @@ import com.github.nacabaro.vbhelper.domain.Sprites
 import com.github.nacabaro.vbhelper.domain.characters.Card
 import com.github.nacabaro.vbhelper.domain.characters.Character
 import com.github.nacabaro.vbhelper.source.ApkSecretsImporter
+import com.github.nacabaro.vbhelper.source.SettingsRepository
 import com.github.nacabaro.vbhelper.source.SecretsImporter
 import com.github.nacabaro.vbhelper.source.SecretsRepository
 import com.github.nacabaro.vbhelper.source.proto.Secrets
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import java.io.File
 import java.io.InputStream
@@ -37,7 +39,9 @@ class SettingsScreenControllerImpl(
     private val secretsImporter: SecretsImporter = ApkSecretsImporter()
     private val application = context.applicationContext as VBHelper
     private val secretsRepository: SecretsRepository = application.container.dataStoreSecretsRepository
+    private val settingsRepository: SettingsRepository = application.container.settingsRepository
     private val database: AppDatabase = application.container.db
+    override val settings = settingsRepository.settingsFlow
 
     init {
         filePickerLauncher = context.registerForActivityResult(
@@ -104,6 +108,12 @@ class SettingsScreenControllerImpl(
 
     override fun onClickImportCard() {
         filePickerCard.launch(arrayOf("*/*"))
+    }
+
+    override fun setVitalWearEnabled(enabled: Boolean) {
+        CoroutineScope(Dispatchers.IO).launch {
+            settingsRepository.enableVitalWearOptions(enabled)
+        }
     }
 
     private fun importCard(uri: Uri) {

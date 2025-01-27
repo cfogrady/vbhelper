@@ -2,8 +2,10 @@ package com.github.nacabaro.vbhelper.di
 
 import com.github.nacabaro.vbhelper.database.AppDatabase
 import com.github.nacabaro.vbhelper.source.DataStoreSecretsRepository
+import com.github.nacabaro.vbhelper.source.SettingsRepository
 
 interface AppContainer {
     val db: AppDatabase
     val dataStoreSecretsRepository: DataStoreSecretsRepository
+    val settingsRepository: SettingsRepository
 }

@@ -17,6 +17,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,16 +28,22 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.github.cfogrady.vbnfc.data.NfcCharacter
+import com.github.cfogrady.vitalwear.protos.Character
+import com.github.cfogrady.vitalwear.transfer.CharacterTransfer
 import com.github.nacabaro.vbhelper.ActivityLifecycleListener
 import com.github.nacabaro.vbhelper.components.TopBanner
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.navigation.NavigationItems
+import com.github.nacabaro.vbhelper.screens.scanScreen.vitalwear.VitalWearController
+import com.github.nacabaro.vbhelper.screens.scanScreen.vitalwear.VitalWearTransfer
 import com.github.nacabaro.vbhelper.source.StorageRepository
 import com.github.nacabaro.vbhelper.source.isMissingSecrets
 import com.github.nacabaro.vbhelper.source.proto.Secrets
+import com.github.nacabaro.vbhelper.source.proto.Settings
 import com.github.nacabaro.vbhelper.utils.characterToNfc
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 
@@ -48,9 +55,10 @@ fun ScanScreen(
     characterId: Long?,
     scanScreenController: ScanScreenController,
 ) {
+
+    val coroutineScope = rememberCoroutineScope()
     val secrets by scanScreenController.secretsFlow.collectAsState(null)
-    var readingScreen by remember { mutableStateOf(false) }
-    var writingScreen by remember { mutableStateOf(false) }
+    var scanScreenState by remember { mutableStateOf(ScanScreenState.SELECT) }
     var isDoneReadingCharacter by remember { mutableStateOf(false) }
     var isDoneSendingCard by remember { mutableStateOf(false) }
     var isDoneWritingCharacter by remember { mutableStateOf(false) }
@@ -68,8 +76,8 @@ fun ScanScreen(
         }
     }
 
-    DisposableEffect(readingScreen || writingScreen, isDoneSendingCard) {
-        if(readingScreen) {
+    DisposableEffect(scanScreenState, isDoneSendingCard) {
+        if(scanScreenState == ScanScreenState.VB_TO_APP) {
             scanScreenController.registerActivityLifecycleListener(SCAN_SCREEN_ACTIVITY_LIFECYCLE_LISTENER, object: ActivityLifecycleListener {
                 override fun onPause() {
                     scanScreenController.cancelRead()
@@ -85,7 +93,7 @@ fun ScanScreen(
             scanScreenController.onClickRead(secrets!!) {
                 isDoneReadingCharacter = true
             }
-        } else if (writingScreen) {
+        } else if (scanScreenState == ScanScreenState.APP_TO_VB) {
             scanScreenController.registerActivityLifecycleListener(
                 SCAN_SCREEN_ACTIVITY_LIFECYCLE_LISTENER,
                 object : ActivityLifecycleListener {
@@ -117,7 +125,7 @@ fun ScanScreen(
             }
         }
         onDispose {
-            if(readingScreen || writingScreen) {
+            if(scanScreenState == ScanScreenState.APP_TO_VB || scanScreenState == ScanScreenState.VB_TO_APP) {
                 scanScreenController.unregisterActivityLifecycleListener(SCAN_SCREEN_ACTIVITY_LIFECYCLE_LISTENER)
                 scanScreenController.cancelRead()
             }
@@ -125,10 +133,10 @@ fun ScanScreen(
     }
 
     if (isDoneReadingCharacter) {
-        readingScreen = false
+        scanScreenState = ScanScreenState.SELECT
         navController.navigate(NavigationItems.Home.route)
     } else if (isDoneSendingCard && isDoneWritingCharacter) {
-        writingScreen = false
+        scanScreenState = ScanScreenState.SELECT
         navController.navigate(NavigationItems.Home.route)
         LaunchedEffect(storageRepository) {
             withContext(Dispatchers.IO) {
@@ -138,64 +146,92 @@ fun ScanScreen(
         }
     }
 
-    if (readingScreen) {
-        ReadingCharacterScreen("Reading character") {
-            readingScreen = false
-            scanScreenController.cancelRead()
-        }
-    } else if (writingScreen) {
-        if (!isDoneSendingCard) {
-            ReadingCharacterScreen("Sending card") {
-                writingScreen = false
-                scanScreenController.cancelRead()
-            }
-        } else if (!isDoneWritingCharacter) {
-            ReadingCharacterScreen("Writing character") {
-                isDoneSendingCard = false
-                writingScreen = false
+    when(scanScreenState) {
+        ScanScreenState.VB_TO_APP -> {
+            ReadingCharacterScreen("Reading character") {
+                scanScreenState = ScanScreenState.SELECT
                 scanScreenController.cancelRead()
             }
         }
-    } else {
-        ChooseConnectOption(
-            onNearby = {scanScreenController.launchNearbyActivity()},
-            onClickRead = when {
-                characterId != null -> null
-                else -> {
-                    {
-                        if(secrets == null) {
-                            Toast.makeText(context, "Secrets is not yet initialized. Try again.", Toast.LENGTH_SHORT).show()
-                        } else if(secrets?.isMissingSecrets() == true) {
-                            Toast.makeText(context, "Secrets not yet imported. Go to Settings and Import APK", Toast.LENGTH_SHORT).show()
-                        } else {
-                            readingScreen = true // kicks off nfc adapter in DisposableEffect
-                        }
-                    }
+        ScanScreenState.APP_TO_VB -> {
+            if (!isDoneSendingCard) {
+                ReadingCharacterScreen("Sending card") {
+                    scanScreenState = ScanScreenState.SELECT
+                    scanScreenController.cancelRead()
                 }
-            },
-            onClickWrite = when {
-                nfcCharacter == null -> null
-                else -> {
-                    {
-                        if(secrets == null) {
-                            Toast.makeText(context, "Secrets is not yet initialized. Try again.", Toast.LENGTH_SHORT).show()
-                        } else if(secrets?.isMissingSecrets() == true) {
-                            Toast.makeText(context, "Secrets not yet imported. Go to Settings and Import APK", Toast.LENGTH_SHORT).show()
-                        } else {
-                            writingScreen = true // kicks off nfc adapter in DisposableEffect
-                        }
-                    }
+            } else if (!isDoneWritingCharacter) {
+                ReadingCharacterScreen("Writing character") {
+                    isDoneSendingCard = false
+                    scanScreenState = ScanScreenState.SELECT
+                    scanScreenController.cancelRead()
                 }
             }
-        )
+        }
+        ScanScreenState.SELECT -> {
+            ChooseConnectOption(
+                onReceiveFromVitalWear = {
+                    coroutineScope.launch {
+                        val hasPermissions = scanScreenController.vitalWearController.checkVitalWearPermissionsAndRequestForMissing()
+                        if(hasPermissions) {
+                            scanScreenState = ScanScreenState.VITALWEAR_TO_APP
+                        }
+                    }
+                },
+                onSendToVitalWear = {
+                    coroutineScope.launch {
+                        val hasPermissions = scanScreenController.vitalWearController.checkVitalWearPermissionsAndRequestForMissing()
+                        if(hasPermissions) {
+                            scanScreenState = ScanScreenState.APP_TO_VITALWEAR
+                        }
+                    }
+                },
+                onClickRead = when {
+                    characterId != null -> null
+                    else -> {
+                        {
+                            if(secrets == null) {
+                                Toast.makeText(context, "Secrets is not yet initialized. Try again.", Toast.LENGTH_SHORT).show()
+                            } else if(secrets?.isMissingSecrets() == true) {
+                                Toast.makeText(context, "Secrets not yet imported. Go to Settings and Import APK", Toast.LENGTH_SHORT).show()
+                            } else {
+                                scanScreenState = ScanScreenState.VB_TO_APP // kicks off nfc adapter in DisposableEffect
+                            }
+                        }
+                    }
+                },
+                onClickWrite = when {
+                    nfcCharacter == null -> null
+                    else -> {
+                        {
+                            if(secrets == null) {
+                                Toast.makeText(context, "Secrets is not yet initialized. Try again.", Toast.LENGTH_SHORT).show()
+                            } else if(secrets?.isMissingSecrets() == true) {
+                                Toast.makeText(context, "Secrets not yet imported. Go to Settings and Import APK", Toast.LENGTH_SHORT).show()
+                            } else {
+                                scanScreenState = ScanScreenState.APP_TO_VB // kicks off nfc adapter in DisposableEffect
+                            }
+                        }
+                    }
+                }
+            )
+        }
+
+        ScanScreenState.VITALWEAR_TO_APP -> {
+            VitalWearTransfer(scanScreenController.vitalWearController, scanScreenState)
+        }
+        ScanScreenState.APP_TO_VITALWEAR -> {
+            VitalWearTransfer(scanScreenController.vitalWearController, scanScreenState)
+        }
     }
 }
 
 @Composable
 fun ChooseConnectOption(
+    displayVitalWearOptions: Boolean = false,
     onClickRead: (() -> Unit)? = null,
     onClickWrite: (() -> Unit)? = null,
-    onNearby: ()->Unit
+    onSendToVitalWear: (()->Unit)? = null,
+    onReceiveFromVitalWear: (()->Unit)? = null,
 ) {
     Scaffold(
         topBar = { TopBanner(text = "Scan a Vital Bracelet") }
@@ -218,11 +254,20 @@ fun ChooseConnectOption(
                 disabled = onClickWrite == null,
                 onClick = onClickWrite?: {  },
             )
-            Spacer(modifier = Modifier.height(16.dp))
-            ScanButton(
-                text = "NearBy",
-                onClick = onNearby,
-            )
+            if(displayVitalWearOptions) {
+                Spacer(modifier = Modifier.height(16.dp))
+                ScanButton(
+                    text = "VitalWear to App",
+                    onClick = onReceiveFromVitalWear?: { },
+                )
+            }
+            if(displayVitalWearOptions) {
+                Spacer(modifier = Modifier.height(16.dp))
+                ScanButton(
+                    text = "App to VitalWear",
+                    onClick = onSendToVitalWear?: { },
+                )
+            }
         }
     }
 }
@@ -255,6 +300,21 @@ fun ScanScreenPreview() {
         navController = rememberNavController(),
         scanScreenController = object: ScanScreenController {
             override val secretsFlow = MutableStateFlow<Secrets>(Secrets.getDefaultInstance())
+            override val settingsFlow = MutableStateFlow<Settings>(Settings.getDefaultInstance())
+            override val vitalWearController = object: VitalWearController {
+                override suspend fun checkVitalWearPermissionsAndRequestForMissing(): Boolean {
+                    return true
+                }
+
+                override fun createCharacterTransfer(): CharacterTransfer {}
+
+                override fun getActiveCharacter(): Character {
+                    Character.getDefaultInstance()
+                }
+
+                override suspend fun receiveCharacter(character: Character): Boolean {}
+
+            }
             override fun unregisterActivityLifecycleListener(key: String) { }
             override fun registerActivityLifecycleListener(
                 key: String,
@@ -265,7 +325,6 @@ fun ScanScreenPreview() {
             override fun onClickRead(secrets: Secrets, onComplete: ()->Unit) {}
             override fun onClickCheckCard(secrets: Secrets, nfcCharacter: NfcCharacter, onComplete: () -> Unit) {}
             override fun onClickWrite(secrets: Secrets, nfcCharacter: NfcCharacter, onComplete: () -> Unit) {}
-            override fun launchNearbyActivity() {}
 
             override fun cancelRead() {}
         },

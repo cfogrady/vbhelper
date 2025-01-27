@@ -18,6 +18,7 @@ import com.github.nacabaro.vbhelper.ActivityLifecycleListener
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.domain.device_data.BECharacterData
 import com.github.nacabaro.vbhelper.domain.device_data.UserCharacter
+import com.github.nacabaro.vbhelper.screens.scanScreen.vitalwear.VitalWearController
 import com.github.nacabaro.vbhelper.source.getCryptographicTransformerMap
 import com.github.nacabaro.vbhelper.source.isMissingSecrets
 import com.github.nacabaro.vbhelper.source.proto.Secrets
@@ -30,9 +31,11 @@ import java.util.GregorianCalendar
 
 class ScanScreenControllerImpl(
     override val secretsFlow: Flow<Secrets>,
+    override val settingsFlow: Flow<com.github.nacabaro.vbhelper.source.proto.Settings>,
     private val componentActivity: ComponentActivity,
     private val registerActivityLifecycleListener: (String, ActivityLifecycleListener)->Unit,
     private val unregisterActivityLifecycleListener: (String)->Unit,
+    override val vitalWearController: VitalWearController,
 ): ScanScreenController {
 
     private val nfcAdapter: NfcAdapter
@@ -131,10 +134,6 @@ class ScanScreenControllerImpl(
                 "Whoops"
             }
         }
-    }
-
-    override fun launchNearbyActivity() {
-        context.startActivity(Intent(context, NearbyActivity::class.java))
     }
 
     override fun onClickCheckCard(
