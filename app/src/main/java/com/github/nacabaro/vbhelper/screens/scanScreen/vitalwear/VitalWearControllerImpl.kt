@@ -1,9 +1,11 @@
 package com.github.nacabaro.vbhelper.screens.scanScreen.vitalwear
 
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.util.fastJoinToString
 import com.github.cfogrady.vitalwear.protos.Character
 import com.github.cfogrady.vitalwear.transfer.CharacterTransfer
 import kotlinx.coroutines.CoroutineScope
@@ -27,7 +29,7 @@ class VitalWearControllerImpl(private val activity: ComponentActivity): VitalWea
                 }
             }
             if(deniedPermissions.isNotEmpty()) {
-                toast("Vital Wear Transfers requires: $deniedPermissions")
+                toast("Permission Required For VitalWear Transfers")
             }
             CoroutineScope(Dispatchers.Default).launch {
                 addPermissionsSuccessResult.emit(deniedPermissions.isEmpty())
@@ -37,7 +39,8 @@ class VitalWearControllerImpl(private val activity: ComponentActivity): VitalWea
 
     override suspend fun checkVitalWearPermissionsAndRequestForMissing(): Boolean {
         val missingPermissions = CharacterTransfer.getMissingPermissions(activity)
-        if(missingPermissions.isNotEmpty()) {
+        Log.i("VitalWearControllerImpl", "Missing Permissions: ${missingPermissions.fastJoinToString(",")}")
+        if(missingPermissions.isEmpty()) {
             return true
         }
         val job = CoroutineScope(Dispatchers.Default).async {
