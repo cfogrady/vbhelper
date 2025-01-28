@@ -22,6 +22,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @Composable
@@ -31,17 +33,28 @@ fun VitalWearTransfer(vitalWearController: VitalWearController, scanScreenState:
     }
     var state by remember { mutableStateOf(VitalWearTransferState.FIND_DEVICES) }
     val characterTransfer = remember { vitalWearController.createCharacterTransfer() }
+    val coroutineScope = rememberCoroutineScope()
 
-    var result: StateFlow<CharacterTransfer.Result> = remember { MutableStateFlow(CharacterTransfer.Result.TRANSFERRING) }
+    var result = remember { MutableStateFlow(CharacterTransfer.Result.TRANSFERRING) }
     when(state) {
-        VitalWearTransferState.FIND_DEVICES -> FindDevices(characterTransfer) {
+        VitalWearTransferState.FIND_DEVICES -> FindDevices(characterTransfer) { deviceName ->
             if(scanScreenState == ScanScreenState.APP_TO_VITALWEAR) {
                 CoroutineScope(Dispatchers.IO).launch {
                     val character = vitalWearController.getActiveCharacter()
-                    result = characterTransfer.sendCharacterToDevice(it, character)
+                    val transferResult = characterTransfer.sendCharacterToDevice(deviceName, character)
+                    coroutineScope.launch {
+                        transferResult.collect{ transferResultValue ->
+                            result.update { transferResultValue }
+                        }
+                    }
                 }
             } else {
-                result = characterTransfer.receiveCharacterFrom(it, vitalWearController::receiveCharacter)
+                val transferResult = characterTransfer.receiveCharacterFrom(deviceName, vitalWearController::receiveCharacter)
+                coroutineScope.launch {
+                    transferResult.collect { transferResultValue ->
+                        result.update { transferResultValue }
+                    }
+                }
             }
             state = VitalWearTransferState.CONNECTING
         }
