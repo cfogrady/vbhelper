@@ -5,8 +5,6 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import com.github.nacabaro.vbhelper.navigation.AppNavigation
 import com.github.nacabaro.vbhelper.di.VBHelper
@@ -16,7 +14,6 @@ import com.github.nacabaro.vbhelper.screens.itemsScreen.ItemsScreenControllerImp
 import com.github.nacabaro.vbhelper.screens.scanScreen.ScanScreenControllerImpl
 import com.github.nacabaro.vbhelper.screens.settingsScreen.SettingsScreenControllerImpl
 import com.github.nacabaro.vbhelper.screens.adventureScreen.AdventureScreenControllerImpl
-import com.github.nacabaro.vbhelper.screens.scanScreen.vitalwear.VitalWearController
 import com.github.nacabaro.vbhelper.screens.scanScreen.vitalwear.VitalWearControllerImpl
 import com.github.nacabaro.vbhelper.screens.storageScreen.StorageScreenControllerImpl
 import com.github.nacabaro.vbhelper.ui.theme.VBHelperTheme
