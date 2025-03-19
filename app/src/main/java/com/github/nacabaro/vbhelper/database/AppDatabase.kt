@@ -16,6 +16,7 @@ import com.github.nacabaro.vbhelper.domain.characters.Dex
 import com.github.nacabaro.vbhelper.domain.device_data.BECharacterData
 import com.github.nacabaro.vbhelper.domain.device_data.TransformationHistory
 import com.github.nacabaro.vbhelper.domain.device_data.UserCharacter
+import com.github.nacabaro.vbhelper.domain.device_data.VitalWearCharacterData
 import com.github.nacabaro.vbhelper.domain.items.Items
 
 @Database(
@@ -26,6 +27,7 @@ import com.github.nacabaro.vbhelper.domain.items.Items
         Sprites::class,
         UserCharacter::class,
         BECharacterData::class,
+        VitalWearCharacterData::class,
         TransformationHistory::class,
         Dex::class,
         Items::class,
