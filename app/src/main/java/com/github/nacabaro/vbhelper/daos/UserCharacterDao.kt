@@ -9,6 +9,7 @@ import com.github.nacabaro.vbhelper.domain.characters.Character
 import com.github.nacabaro.vbhelper.domain.device_data.UserCharacter
 import com.github.nacabaro.vbhelper.domain.device_data.BECharacterData
 import com.github.nacabaro.vbhelper.domain.device_data.TransformationHistory
+import com.github.nacabaro.vbhelper.domain.device_data.VitalWearCharacterData
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 
 @Dao
@@ -18,6 +19,9 @@ interface UserCharacterDao {
 
     @Insert
     fun insertBECharacterData(characterData: BECharacterData)
+
+    @Insert
+    fun insertVitalWearCharacterData(characterData: VitalWearCharacterData)
 
     @Upsert
     fun updateCharacter(character: UserCharacter)

@@ -12,16 +12,16 @@ import androidx.room.ForeignKey
             childColumns = ["dimId"],
             onDelete = ForeignKey.CASCADE
         )
-    ]
+    ],
 )
 /*
  * Character represents a character on a DIM card. There should only be one of these per dimId
- * and monIndex.
- * TODO: Customs will mean this should be unique per cardName and monIndex
+ * and monIndex. Note: dimId here does not refer to the dim number on the card image, but rather
+ * the unique id given to each card image.
  */
 data class Character (
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val dimId: Long,
+    val dimId: Long, // primary key of Card table, not the dim number on the card image.
     val monIndex: Int,
     val name: ByteArray,
     val stage: Int, // These should be replaced with enums

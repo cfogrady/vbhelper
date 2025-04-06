@@ -2,6 +2,7 @@ package com.github.nacabaro.vbhelper.screens.scanScreen.vitalwear
 
 import com.github.cfogrady.vitalwear.protos.Character
 import com.github.cfogrady.vitalwear.transfer.CharacterTransfer
+import com.github.nacabaro.vbhelper.domain.characters.Card
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -38,7 +39,7 @@ interface VitalWearController {
             override fun getActiveCharacter(): Character {
                 return Character.getDefaultInstance()
             }
-            override suspend fun receiveCharacter(character: Character): Boolean {
+            override suspend fun receiveCharacter(card: Card, character: Character): Boolean {
                 return true
             }
             override fun deleteCharacter() {}
@@ -53,7 +54,7 @@ interface VitalWearController {
 
     fun getActiveCharacter(): Character
 
-    suspend fun receiveCharacter(character: Character): Boolean
+    suspend fun receiveCharacter(card: Card, character: Character): Boolean
 
     fun deleteCharacter()
 

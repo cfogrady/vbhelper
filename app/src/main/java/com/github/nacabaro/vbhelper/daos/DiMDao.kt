@@ -16,4 +16,7 @@ interface DiMDao {
 
     @Query("SELECT * FROM Card WHERE dimId = :id")
     fun getDimById(id: Int): Card?
+
+    @Query("SELECT * FROM Card WHERE name = :name")
+    fun getDimByName(name: String): Card?
 }
