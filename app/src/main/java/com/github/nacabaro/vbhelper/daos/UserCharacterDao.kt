@@ -50,6 +50,8 @@ interface UserCharacterDao {
         """
         SELECT
             uc.*,
+            c.stage,
+            c.attribute,
             c.sprite1 AS spriteIdle,
             c.spritesWidth AS spriteWidth,
             c.spritesHeight AS spriteHeight,
@@ -70,6 +72,8 @@ interface UserCharacterDao {
         """
         SELECT
             uc.*,
+            c.stage,
+            c.attribute,
             c.sprite1 AS spriteIdle,
             c.spritesWidth AS spriteWidth,
             c.spritesHeight AS spriteHeight,
@@ -96,6 +100,8 @@ interface UserCharacterDao {
         """
         SELECT
             uc.*,
+            c.stage,
+            c.attribute,
             c.sprite1 AS spriteIdle,
             c.spritesWidth AS spriteWidth,
             c.spritesHeight AS spriteHeight,
